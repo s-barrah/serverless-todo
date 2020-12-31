@@ -1,0 +1,17 @@
+# package directories
+node_modules
+jspm_packages
+
+# Serverless directories
+.serverless
+
+# Webpack directories
+.webpack
+
+# Misc
+.idea
+.vscode
+.env
+.dynamodb
+
+yarn-error.log

@@ -1,0 +1,28 @@
+{
+  "name": "serverless-todo",
+  "version": "1.0.0",
+  "description": "Serverless webpack example using Typescript",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@types/uuid": "^8.3.0",
+    "source-map-support": "^0.5.19",
+    "uuid": "^8.3.2",
+    "validate.js": "^0.13.1"
+  },
+  "devDependencies": {
+    "@serverless/typescript": "^2.12.0",
+    "@types/aws-lambda": "^8.10.64",
+    "@types/node": "^14.14.6",
+    "aws-sdk": "^2.820.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "serverless-bundle": "^3.2.1",
+    "serverless-dotenv-plugin": "^3.1.0",
+    "serverless-dynamodb-local": "^0.2.39",
+    "serverless-offline": "^6.8.0"
+  },
+  "author": "Sidney Barrah",
+  "license": "MIT"
+}

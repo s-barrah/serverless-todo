@@ -1,0 +1,20 @@
+{
+  "listId": {
+    "presence": {
+      "allowEmpty": false
+    },
+    "type": "string"
+  },
+  "taskId": {
+    "presence": {
+      "allowEmpty": false
+    },
+    "type": "string"
+  },
+  "description": {
+    "presence": {
+      "allowEmpty": false
+    },
+    "type": "string"
+  }
+}

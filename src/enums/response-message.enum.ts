@@ -1,0 +1,17 @@
+export enum ResponseMessage {
+    CREATE_LIST_SUCCESS = 'To-do list successfully created',
+    CREATE_LIST_FAIL = 'To-do list cannot be created',
+    DELETE_LIST_SUCCESS = 'To-do list successfully deleted',
+    DELETE_LIST_FAIL = 'To-do list cannot be deleted',
+    GET_LIST_SUCCESS = 'To-do list successfully retrieved',
+    GET_LIST_FAIL = 'To-do list not found',
+    UPDATE_LIST_SUCCESS = 'To-do list successfully updated',
+    UPDATE_LIST_FAIL = 'To-do list cannot be updated',
+    CREATE_TASK_SUCCESS = 'Task successfully added',
+    CREATE_TASK_FAIL = 'Task successfully added',
+    DELETE_TASK_SUCCESS = 'Task successfully deleted',
+    DELETE_TASK_FAIL = 'Task cannot be deleted',
+    UPDATE_TASK_SUCCESS = 'Task successfully updated',
+    UPDATE_TASK_FAIL = 'Task cannot be updated',
+    ERROR = 'Unknown error.',
+}

@@ -1,0 +1,8 @@
+{
+  "taskId": {
+    "presence": {
+      "allowEmpty": false
+    },
+    "type": "string"
+  }
+}
