@@ -85,10 +85,13 @@ import { ResponseMessage } from "../../enums/response-message.enum";
 export const createTask: APIGatewayProxyHandler = async (event: APIGatewayEvent, _context: Context): Promise<APIGatewayProxyResult> => {
     let response;
     const requestData = JSON.parse(event.body);
+    const databaseService = new DatabaseService();
 
-    return validateAgainstConstraints(requestData, requestConstraints)
+    return Promise.all([
+        validateAgainstConstraints(requestData, requestConstraints),
+        databaseService.getItem({ key: requestData.listId, tableName: process.env.LIST_TABLE })
+    ])
         .then(async () => {
-            const databaseService = new DatabaseService();
 
             const taskModel = new TaskModel(requestData);
             const data = taskModel.getEntityMappings();
@@ -97,14 +100,18 @@ export const createTask: APIGatewayProxyHandler = async (event: APIGatewayEvent,
                 TableName: process.env.TASKS_TABLE,
                 Item: {
                     id: data.id,
+                    listId: data.listId,
                     description: data.description,
                     completed: data.completed,
+                    createdAt: data.timestamp,
+                    updatedAt: data.timestamp,
                 }
             }
-            return databaseService.create(params);
+            await databaseService.create(params);
+            return data.id;
         })
-        .then(() => {
-            response = new ResponseModel({ }, StatusCode.OK, ResponseMessage.CREATE_TASK_SUCCESS);
+        .then((taskId) => {
+            response = new ResponseModel({ taskId }, StatusCode.OK, ResponseMessage.CREATE_TASK_SUCCESS);
         })
         .catch((error) => {
             response = (error instanceof ResponseModel) ? error : new ResponseModel({}, StatusCode.ERROR, ResponseMessage.CREATE_TASK_FAIL);

@@ -7,8 +7,6 @@ import {
 import 'source-map-support/register';
 
 // Models
-// import ListModel from "../../models/list.model";
-// import TaskModel from "../../models/task.model";
 import ResponseModel from "../../models/response.model";
 
 // Services
@@ -51,6 +49,7 @@ import { ResponseMessage } from "../../enums/response-message.enum";
  *          "name": "My Wednesday List",
  *          "createdAt": 1609383835145,
  *          "id": "468c8094-a756-4000-a919-974a64b5be8e",
+ *          "updatedAt": 1609468610216,
  *          "tasks": [
  *              {
  *                "id": "c1219773-19b5-4228-ba7c-06309a0b00ee",
@@ -104,29 +103,14 @@ export const getList: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
     let response;
     const requestData = JSON.parse(event.body);
 
-    console.log('GET LIST ACTION TRIGGERED ---- requestData: ', requestData);
-
     const databaseService = new DatabaseService();
 
     return validateAgainstConstraints(requestData, requestConstraints)
         .then(async () => {
-            console.log('GET LIST ACTION TRIGGERED ---- VALIDATED');
-
-            const listParams = {
-                TableName: process.env.LIST_TABLE,
-                Key: { id: requestData.listId },
-            }
-            const results = await databaseService.get(listParams);
-            console.log('GET LIST --- results: ', results);
-            if (results) {
-                return results;
-            }
-            return Promise.reject('List Id not valid')
-
+            return await databaseService.getItem({ key: requestData.listId, tableName: process.env.LIST_TABLE });
         })
-        .then((data) => {
-            console.log('GET LIST ---DATA: ', data);
-            const taskParams = {
+        .then( async (data) => {
+            const params = {
                 TableName: process.env.TASKS_TABLE,
                 IndexName : 'list_index',
                 KeyConditionExpression : 'listId = :listIdVal',
@@ -134,10 +118,23 @@ export const getList: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
                     ':listIdVal' : requestData.listId
                 }
             };
-            return databaseService.query(taskParams);
+            const results = await databaseService.query(params);
+            const tasksData = results?.Items?.map((task) => {
+                return {
+                    id: task.id,
+                    description: task.description,
+                    completed: task.completed,
+                    createdAt: task.createdAt,
+                    updatedAt: task.updatedAt,
+                }
+            });
+            response = new ResponseModel({
+                ...data.Item,
+                tasks: tasksData,
+            }, StatusCode.OK, ResponseMessage.GET_LIST_SUCCESS);
 
         })
-        .then((results) => {
+        /*.then((results) => {
             const data = results?.Items?.map((task) => {
                 return {
                     id: task.id,
@@ -151,10 +148,10 @@ export const getList: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
                 response = new ResponseModel({
                     ...results[0],
                     tasks: data
-                }, StatusCode.OK, 'To -do list successfully retrieved');
+                }, StatusCode.OK, ResponseMessage.GET_LIST_SUCCESS);
             }
 
-        })
+        })*/
         .catch((error) => {
             response = (error instanceof ResponseModel) ? error : new ResponseModel({}, StatusCode.ERROR, ResponseMessage.GET_LIST_FAIL);
         })

@@ -88,18 +88,20 @@ export const updateList: APIGatewayProxyHandler = async (event: APIGatewayEvent,
                 Key: {
                     "id": requestData.listId
                 },
-                UpdateExpression: "set #name = :name",
+                UpdateExpression: "set #name = :name, updatedAt = :timestamp",
                 ExpressionAttributeNames: {
                     "#name": "name"
                 },
                 ExpressionAttributeValues: {
                     ":name": requestData.name,
-                }
+                    ":timestamp": new Date().getTime(),
+                },
+                ReturnValues: "UPDATED_NEW"
             }
             return await databaseService.update(params);
         })
-        .then((updated) => {
-            response = new ResponseModel({ updated }, StatusCode.OK, ResponseMessage.UPDATE_LIST_SUCCESS);
+        .then((results) => {
+            response = new ResponseModel({ ...results.Attributes }, StatusCode.OK, ResponseMessage.UPDATE_LIST_SUCCESS);
         })
         .catch((error) => {
             response = (error instanceof ResponseModel) ? error : new ResponseModel({}, StatusCode.ERROR, ResponseMessage.UPDATE_LIST_FAIL);

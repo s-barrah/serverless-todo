@@ -76,13 +76,16 @@ export const deleteList: APIGatewayProxyHandler = async (event: APIGatewayEvent,
     const requestData = JSON.parse(event.body);
     const databaseService = new DatabaseService();
 
-    return validateAgainstConstraints(requestData, requestConstraints)
+    return Promise.all([
+        validateAgainstConstraints(requestData, requestConstraints),
+        databaseService.getItem({ key: requestData.listId, tableName: process.env.LIST_TABLE })
+    ])
         .then(async () => {
-            const listParams = {
+            const params = {
                 TableName: process.env.LIST_TABLE,
                 Key: { id: requestData.listId },
             }
-            return databaseService.delete(listParams) // Delete to-do list
+            return databaseService.delete(params) // Delete to-do list
         })
         .then(async () => {
             const taskParams = {
@@ -97,21 +100,23 @@ export const deleteList: APIGatewayProxyHandler = async (event: APIGatewayEvent,
             const taskEntities = results?.Items?.map((item) => {
                 return { DeleteRequest: { Key: { id: item.id } } };
             });
-            if (taskEntities.length < 25) {
+            if (taskEntities.length) {
+                if (taskEntities.length > 25) {
+                    const taskChunks = createChunks(taskEntities, 25); // Create chunks if tasks more than 25
+                    return Promise.all(taskChunks.map((tasks) => {
+                        return databaseService.batchCreate({
+                            RequestItems: {
+                                [process.env.TASKS_TABLE]: tasks, // Batch delete task items
+                            }
+                        });
+                    }));
+                }
                 return databaseService.batchCreate({
                     RequestItems: {
                         [process.env.TASKS_TABLE]: taskEntities, // Batch delete task items
                     }
                 });
             }
-            const taskChunks = createChunks(taskEntities, 25); // Create chunks if tasks more than 25
-            return Promise.all(taskChunks.map((tasks) => {
-                return databaseService.batchCreate({
-                    RequestItems: {
-                        [process.env.TASKS_TABLE]: tasks, // Batch delete task items
-                    }
-                });
-            }));
         })
         .then(() => {
             response = new ResponseModel({}, StatusCode.OK, ResponseMessage.DELETE_LIST_SUCCESS);

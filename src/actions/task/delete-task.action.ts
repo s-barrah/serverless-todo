@@ -16,7 +16,7 @@ import DatabaseService from "../../services/database.service";
 import { validateAgainstConstraints } from "../../utils/util";
 
 // Define the request constraints
-import requestConstraints from '../../constraints/task/id.constraint.json';
+import requestConstraints from '../../constraints/task/delete.constraint.json';
 
 // Enums
 import { StatusCode } from "../../enums/status-code.enum";
@@ -74,20 +74,28 @@ import { ResponseMessage } from "../../enums/response-message.enum";
 export const deleteTask: APIGatewayProxyHandler = async (event: APIGatewayEvent, _context: Context): Promise<APIGatewayProxyResult> => {
     let response;
     const requestData = JSON.parse(event.body);
+
     const databaseService = new DatabaseService();
 
-    console.log('DELETE TASK ACTION TRIGGERED ---- requestData: ', requestData);
+    // requestData.taskId, process.env.TASKS_TABLE
 
-    return validateAgainstConstraints(requestData, requestConstraints)
+    return Promise.all([
+        validateAgainstConstraints(requestData, requestConstraints),
+        databaseService.getItem({ key: requestData.listId, tableName: process.env.LIST_TABLE }),
+        databaseService.getItem({ key: requestData.taskId, tableName: process.env.TASKS_TABLE })
+    ])
         .then(async () => {
-            console.log('DELETE TASK ACTION TRIGGERED ---- VALIDATED');
             const params = {
-                TableName: process.env.TASK_TABLE,
-                Key: { id: requestData.taskId },
+                TableName: process.env.TASKS_TABLE,
+                Key: {
+                    "id": requestData.taskId,
+                    "listId": requestData.listId
+                },
             }
             return databaseService.delete(params) // Delete task from db
         })
-        .then(() => {
+        .then((deleteResponse) => {
+            console.log('DELETE RESPONSE --- deleteResponse: ', deleteResponse);
             response = new ResponseModel({}, StatusCode.OK, ResponseMessage.DELETE_TASK_SUCCESS);
         })
         .catch((error) => {

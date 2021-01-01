@@ -85,24 +85,31 @@ export const updateTask: APIGatewayProxyHandler = async (event: APIGatewayEvent,
     let response;
     const requestData = JSON.parse(event.body);
 
-    return validateAgainstConstraints(requestData, requestConstraints)
+    const databaseService = new DatabaseService();
+
+    return Promise.all([
+        validateAgainstConstraints(requestData, requestConstraints),
+        databaseService.getItem({ key: requestData.listId, tableName: process.env.LIST_TABLE })
+    ])
         .then(async () => {
-            const databaseService = new DatabaseService();
+
             const params = {
-                TableName: process.env.TASK_TABLE,
+                TableName: process.env.TASKS_TABLE,
                 Key: {
                     "id": requestData.taskId,
                     "listId": requestData.listId
                 },
-                UpdateExpression: "set description = :description",
+                UpdateExpression: "set description = :description, updatedAt = :timestamp",
                 ExpressionAttributeValues: {
                     ":description": requestData.description,
-                }
+                    ":timestamp": new Date().getTime(),
+                },
+                ReturnValues: "UPDATED_NEW"
             }
             return await databaseService.update(params);
         })
-        .then((updated) => {
-            response = new ResponseModel({ updated }, StatusCode.OK, ResponseMessage.UPDATE_TASK_SUCCESS);
+        .then((results) => {
+            response = new ResponseModel({ ...results.Attributes }, StatusCode.OK, ResponseMessage.UPDATE_TASK_SUCCESS);
         })
         .catch((error) => {
             response = (error instanceof ResponseModel) ? error : new ResponseModel({}, StatusCode.ERROR, ResponseMessage.UPDATE_TASK_FAIL);

@@ -18,9 +18,9 @@ const RESPONSE_HEADERS: ResponseHeader = {
 };
 
 const STATUS_MESSAGES = {
-    200: Status.SUCCESS,
-    400: Status.BAD_REQUEST,
-    500: Status.ERROR,
+    [StatusCode.OK]: Status.SUCCESS,
+    [StatusCode.BAD_REQUEST]: Status.BAD_REQUEST,
+    [StatusCode.ERROR]: Status.ERROR,
 }
 
 /**

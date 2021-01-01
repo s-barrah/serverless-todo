@@ -14,4 +14,5 @@ export enum ResponseMessage {
     UPDATE_TASK_SUCCESS = 'Task successfully updated',
     UPDATE_TASK_FAIL = 'Task cannot be updated',
     ERROR = 'Unknown error.',
+    INVALID_REQUEST = 'Invalid Request. Item does not exist',
 }

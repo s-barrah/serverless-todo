@@ -17,7 +17,7 @@ import DatabaseService from "../../services/database.service";
 import { validateAgainstConstraints } from "../../utils/util";
 
 // Define the request constraints
-import * as requestConstraints from '../../constraints/list/create.constraint.json';
+import requestConstraints from '../../constraints/list/create.constraint.json';
 
 // Enums
 import { StatusCode } from "../../enums/status-code.enum";
@@ -75,15 +75,12 @@ import { ResponseMessage } from "../../enums/response-message.enum";
 export const createList: APIGatewayProxyHandler = async (event: APIGatewayEvent, _context: Context): Promise<APIGatewayProxyResult> => {
     let response;
     const requestData = JSON.parse(event.body);
-
     return validateAgainstConstraints(requestData, requestConstraints)
         .then(async () => {
             const databaseService = new DatabaseService();
-
             const listModel = new ListModel(requestData);
             const data = listModel.getEntityMappings();
-
-            const listParams = {
+            const params = {
                 TableName: process.env.LIST_TABLE,
                 Item: {
                     id: data.id,
@@ -92,9 +89,7 @@ export const createList: APIGatewayProxyHandler = async (event: APIGatewayEvent,
                     updatedAt: data.timestamp,
                 }
             }
-
-            await databaseService.create(listParams)
-
+            await databaseService.create(params);
             return data.id;
         })
         .then((listId) => {
