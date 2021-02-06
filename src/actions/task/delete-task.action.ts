@@ -16,7 +16,7 @@ import DatabaseService from "../../services/database.service";
 import { validateAgainstConstraints } from "../../utils/util";
 
 // Define the request constraints
-import requestConstraints from '../../constraints/task/delete.constraint.json';
+import requestConstraints from '../../constraints/task/get.constraint.json';
 
 // Enums
 import { StatusCode } from "../../enums/status-code.enum";
@@ -38,7 +38,8 @@ import { ResponseMessage } from "../../enums/response-message.enum";
  *
  * @apiParamExample {json} Request-Example:
  *     {
- *      "taskId": "468c8094-a756-4000-a919-974a64b5be8e",
+ *      "listId": "468c8094-a756-4000-a919-974a64b5be8e",
+ *      "taskId": "c1219773-19b5-4228-ba7c-06309a0b00ee",
  *    }
  *
  * @apiSuccessExample {json} Success-Response:
@@ -72,36 +73,55 @@ import { ResponseMessage } from "../../enums/response-message.enum";
  *    }
  */
 export const deleteTask: APIGatewayProxyHandler = async (event: APIGatewayEvent, _context: Context): Promise<APIGatewayProxyResult> => {
+    // Initialize response variable
     let response;
+
+    // Parse request parameters
     const requestData = JSON.parse(event.body);
 
+    // Initialise database service
     const databaseService = new DatabaseService();
 
-    // requestData.taskId, process.env.TASKS_TABLE
+    // Destructure request data
+    const { taskId, listId } = requestData
 
-    return Promise.all([
-        validateAgainstConstraints(requestData, requestConstraints),
-        databaseService.getItem({ key: requestData.listId, tableName: process.env.LIST_TABLE }),
-        databaseService.getItem({ key: requestData.taskId, tableName: process.env.TASKS_TABLE })
-    ])
-        .then(async () => {
+    // Destructure process.env
+    const { TASKS_TABLE } = process.env;
+
+    // Validate against constraints
+    return validateAgainstConstraints(requestData, requestConstraints)
+        .then(() => {
+            // Get item from the DynamoDB table
+            // if it exists
+            return databaseService.getItem({
+                key: taskId,
+                hash: 'listId',
+                hashValue: listId,
+                tableName: TASKS_TABLE
+            })
+        })
+        .then(() => {
+            // Initialise DynamoDB DELETE parameters
             const params = {
-                TableName: process.env.TASKS_TABLE,
+                TableName: TASKS_TABLE,
                 Key: {
-                    "id": requestData.taskId,
-                    "listId": requestData.listId
+                    "id": taskId,
+                    "listId": listId
                 },
             }
-            return databaseService.delete(params) // Delete task from db
+            // Delete task from db
+            return databaseService.delete(params)
         })
-        .then((deleteResponse) => {
-            console.log('DELETE RESPONSE --- deleteResponse: ', deleteResponse);
+        .then(() => {
+            // Set Success Response
             response = new ResponseModel({}, StatusCode.OK, ResponseMessage.DELETE_TASK_SUCCESS);
         })
         .catch((error) => {
+            // Set Error Response
             response = (error instanceof ResponseModel) ? error : new ResponseModel({}, StatusCode.ERROR, ResponseMessage.DELETE_TASK_FAIL);
         })
         .then(() => {
+            // Return API Response
             return response.generate()
         });
 }

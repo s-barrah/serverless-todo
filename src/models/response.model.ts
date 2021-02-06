@@ -17,7 +17,7 @@ const RESPONSE_HEADERS: ResponseHeader = {
     'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
 };
 
-const STATUS_MESSAGES = {
+export const STATUS_MESSAGES = {
     [StatusCode.OK]: Status.SUCCESS,
     [StatusCode.BAD_REQUEST]: Status.BAD_REQUEST,
     [StatusCode.ERROR]: Status.ERROR,
@@ -46,7 +46,7 @@ export default class ResponseModel {
     }
 
     /**
-     * Add or update a body variable
+     * Add or update-task-list a body variable
      * @param variable
      * @param value
      */
@@ -95,7 +95,7 @@ export default class ResponseModel {
     }
 
     /**
-     * Geneate a response
+     * Generate a response
      * @return {IResponse}
      */
     generate = (): IResponse => {

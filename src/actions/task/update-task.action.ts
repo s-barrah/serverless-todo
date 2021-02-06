@@ -22,6 +22,11 @@ import requestConstraints from '../../constraints/task/update.constraint.json';
 import { StatusCode } from "../../enums/status-code.enum";
 import { ResponseMessage } from "../../enums/response-message.enum";
 
+enum PlaceHolder {
+    DESCRIPTION = ':description',
+    COMPLETED = ':completed',
+}
+
 /***
  * Updates task and insert into database
  *
@@ -43,6 +48,7 @@ import { ResponseMessage } from "../../enums/response-message.enum";
  *       "listId": "468c8094-a756-4000-a919-974a64b5be8e",
  *       "taskId": "c1219773-19b5-4228-ba7c-06309a0b00ee",
  *       "description": "Clean the apartment",
+ *       "completed": true,
  *    }
  *
  * @apiSuccessExample {json} Success-Response:
@@ -82,39 +88,75 @@ import { ResponseMessage } from "../../enums/response-message.enum";
  *    }
  */
 export const updateTask: APIGatewayProxyHandler = async (event: APIGatewayEvent, _context: Context): Promise<APIGatewayProxyResult> => {
+    // Initialize response variable
     let response;
+
+    // Parse request parameters
     const requestData = JSON.parse(event.body);
 
+    // Initialise database service
     const databaseService = new DatabaseService();
 
+    // Destructure request data
+    const { listId, taskId, completed, description } = requestData
+
+    // Destructure process.env
+    const { LIST_TABLE, TASKS_TABLE } = process.env;
+
     return Promise.all([
+        // Validate against constraints
         validateAgainstConstraints(requestData, requestConstraints),
-        databaseService.getItem({ key: requestData.listId, tableName: process.env.LIST_TABLE })
+        // Get item from the DynamoDB table
+        databaseService.getItem({ key: listId, tableName: LIST_TABLE })
     ])
         .then(async () => {
 
-            const params = {
-                TableName: process.env.TASKS_TABLE,
-                Key: {
-                    "id": requestData.taskId,
-                    "listId": requestData.listId
-                },
-                UpdateExpression: "set description = :description, updatedAt = :timestamp",
-                ExpressionAttributeValues: {
-                    ":description": requestData.description,
-                    ":timestamp": new Date().getTime(),
-                },
-                ReturnValues: "UPDATED_NEW"
+            // Optional completed parameter
+            const isCompletedPresent = typeof completed !== 'undefined';
+
+            // Initialise the update-task-list expression
+            const updateExpression = `set ${description ? 'description = :description,' : ''} ${typeof completed !== 'undefined' ? 'completed = :completed,' : ''} updatedAt = :timestamp`;
+
+            // Ensures at least one optional parameter is present
+            if (description || isCompletedPresent) {
+
+                // Initialise DynamoDB UPDATE parameters
+                const params = {
+                    TableName: TASKS_TABLE,
+                    Key: {
+                        "id": taskId,
+                        "listId": listId
+                    },
+                    UpdateExpression: updateExpression,
+                    ExpressionAttributeValues: {
+                        ":timestamp": new Date().getTime(),
+                    },
+                    ReturnValues: "UPDATED_NEW"
+                }
+                // Set optional values only if present
+                if (description) {
+                    params.ExpressionAttributeValues[PlaceHolder.DESCRIPTION] = description
+                }
+                if (isCompletedPresent) {
+                    params.ExpressionAttributeValues[PlaceHolder.COMPLETED] = completed
+                }
+
+                // Updates item in DynamoDB table
+                return await databaseService.update(params);
             }
-            return await databaseService.update(params);
+            // Throws error if none of the optional parameters is present
+            throw new ResponseModel({}, StatusCode.BAD_REQUEST, ResponseMessage.INVALID_REQUEST)
         })
         .then((results) => {
+            // Set Success Response
             response = new ResponseModel({ ...results.Attributes }, StatusCode.OK, ResponseMessage.UPDATE_TASK_SUCCESS);
         })
         .catch((error) => {
+            // Set Error Response
             response = (error instanceof ResponseModel) ? error : new ResponseModel({}, StatusCode.ERROR, ResponseMessage.UPDATE_TASK_FAIL);
         })
         .then(() => {
+            // Return API Response
             return response.generate()
         });
 }

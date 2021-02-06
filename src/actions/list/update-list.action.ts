@@ -40,7 +40,7 @@ import { ResponseMessage } from "../../enums/response-message.enum";
  * @apiParamExample {json} Request-Example:
  *     {
  *       "listId": "468c8094-a756-4000-a919-974a64b5be8e",
- *       "name": "My To-do list update",
+ *       "name": "My To-do list update-task-list",
  *    }
  *
  * @apiSuccessExample {json} Success-Response:
@@ -77,36 +77,59 @@ import { ResponseMessage } from "../../enums/response-message.enum";
  *    }
  */
 export const updateList: APIGatewayProxyHandler = async (event: APIGatewayEvent, _context: Context): Promise<APIGatewayProxyResult> => {
+    // Initialize response variable
     let response;
+
+    // Parse request parameters
     const requestData = JSON.parse(event.body);
 
-    return validateAgainstConstraints(requestData, requestConstraints)
+    // Initialise database service
+    const databaseService = new DatabaseService();
+
+    // Destructure environmental variable
+    const { LIST_TABLE } = process.env;
+
+    // Destructure request data
+    const { listId, name } = requestData
+
+
+    return Promise.all([
+        // Validate against constraints
+        validateAgainstConstraints(requestData, requestConstraints),
+        // Item exists
+        databaseService.getItem({key: listId, tableName: LIST_TABLE})
+    ])
         .then(async () => {
-            const databaseService = new DatabaseService();
+
+            // Initialise DynamoDB UPDATE parameters
             const params = {
-                TableName: process.env.LIST_TABLE,
+                TableName: LIST_TABLE,
                 Key: {
-                    "id": requestData.listId
+                    "id": listId
                 },
                 UpdateExpression: "set #name = :name, updatedAt = :timestamp",
                 ExpressionAttributeNames: {
                     "#name": "name"
                 },
                 ExpressionAttributeValues: {
-                    ":name": requestData.name,
+                    ":name": name,
                     ":timestamp": new Date().getTime(),
                 },
                 ReturnValues: "UPDATED_NEW"
             }
+            // Updates Item in DynamoDB table
             return await databaseService.update(params);
         })
         .then((results) => {
+            // Set Success Response
             response = new ResponseModel({ ...results.Attributes }, StatusCode.OK, ResponseMessage.UPDATE_LIST_SUCCESS);
         })
         .catch((error) => {
+            // Set Error Response
             response = (error instanceof ResponseModel) ? error : new ResponseModel({}, StatusCode.ERROR, ResponseMessage.UPDATE_LIST_FAIL);
         })
         .then(() => {
+            // Return API Response
             return response.generate()
         });
 }

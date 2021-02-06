@@ -1,4 +1,6 @@
-export { hello } from './src/actions/hello';
+// Custom API Gateway Authorizer
+export { jwtAuth } from './src/actions/auth/jwt-auth.action';
+export { basicAuth } from './src/actions/auth/basic-auth.action';
 
 // List functions
 export { createList } from './src/actions/list/create-list.action';
@@ -8,22 +10,7 @@ export { updateList } from './src/actions/list/update-list.action';
 
 // Task functions
 export { createTask } from './src/actions/task/create-task.action';
+export { getTask } from './src/actions/task/get-task.action';
 export { deleteTask } from './src/actions/task/delete-task.action';
 export { updateTask } from './src/actions/task/update-task.action';
 
-
-/*
-
-import { APIGatewayProxyHandler } from 'aws-lambda';
-import 'source-map-support/register';
-
-export const hello: APIGatewayProxyHandler = async (event, _context) => {
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      message: 'Go Serverless Webpack (Typescript) v1.0! Your function executed successfully!',
-      input: event,
-    }, null, 2),
-  };
-}
-*/

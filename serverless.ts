@@ -39,6 +39,10 @@ const serverlessConfiguration: AWS = {
       babelOptions: {
         presets: ["env"]
       }
+    },
+    profile: {
+      prod: 'prodAccount',
+      dev: 'devAccount'
     }
   },
   plugins: [
@@ -53,6 +57,8 @@ const serverlessConfiguration: AWS = {
   provider: {
     name: 'aws',
     runtime: 'nodejs12.x',
+    stage: 'dev',
+    region: 'eu-west-1',
     apiGateway: {
       shouldStartNameWithService: true,
       minimumCompressionSize: 1024,
@@ -81,9 +87,10 @@ const serverlessConfiguration: AWS = {
           {"Fn::GetAtt": [ 'TasksTable', 'Arn' ]}
         ]
       }
-    ]
+    ],
+    profile: '${self:custom.profile.${self:custom.stage}}'
   },
-  functions: functions,
+  functions,
   resources: {
     Resources: dynamoDbTables,
   }

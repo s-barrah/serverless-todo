@@ -73,13 +73,25 @@ import { ResponseMessage } from "../../enums/response-message.enum";
  *    }
  */
 export const createList: APIGatewayProxyHandler = async (event: APIGatewayEvent, _context: Context): Promise<APIGatewayProxyResult> => {
+    // Initialize response variable
     let response;
+
+    // Parse request parameters
     const requestData = JSON.parse(event.body);
+
+    // Validate against constraints
     return validateAgainstConstraints(requestData, requestConstraints)
         .then(async () => {
+            // Initialise database service
             const databaseService = new DatabaseService();
+
+            // Initialise and hydrate model
             const listModel = new ListModel(requestData);
+
+            // Get model data
             const data = listModel.getEntityMappings();
+
+            // Initialise DynamoDB PUT parameters
             const params = {
                 TableName: process.env.LIST_TABLE,
                 Item: {
@@ -89,16 +101,20 @@ export const createList: APIGatewayProxyHandler = async (event: APIGatewayEvent,
                     updatedAt: data.timestamp,
                 }
             }
+            // Inserts item into DynamoDB table
             await databaseService.create(params);
             return data.id;
         })
         .then((listId) => {
+            // Set Success Response
             response = new ResponseModel({ listId }, StatusCode.OK, ResponseMessage.CREATE_LIST_SUCCESS);
         })
         .catch((error) => {
+            // Set Error Response
             response = (error instanceof ResponseModel) ? error : new ResponseModel({}, StatusCode.ERROR, ResponseMessage.CREATE_LIST_FAIL);
         })
         .then(() => {
+            // Return API Response
             return response.generate()
         });
 }

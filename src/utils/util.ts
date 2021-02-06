@@ -10,7 +10,7 @@ import { IGeneric } from "../interfaces/generic.interface";
  * Validate values against constraints
  * @param values
  * @param constraints
- * @return {Promise<any>}
+ * @return {Promise<*>}
  */
 export const validateAgainstConstraints = (values: IGeneric<string>, constraints: IGeneric<object>) => {
 
@@ -39,13 +39,3 @@ export const createChunks = (data: any[], chunkSize: number) => {
     }
     return urlChunks;
 }
-
-/*
-* if (typeof validation === 'undefined') {
-        return null
-    } else {
-        return new ResponseModel({ validation }, 400, 'required fields are missing', 'error');
-    }
-*
-*
-* */

@@ -2,11 +2,11 @@ import { v4 as UUID } from 'uuid';
 
 // Interfaces
 interface IProps {
+    id?: string;
     name: string;
 }
 
 interface IListInterface extends IProps {
-    id: string;
     timestamp: number;
 }
 
@@ -15,8 +15,8 @@ export default class ListModel {
     private _id: string;
     private _name: string;
 
-    constructor({name = ''}: IProps) {
-        this._id = UUID();
+    constructor({ id = UUID(), name = ''}: IProps) {
+        this._id = id;
         this._name = name;
     }
 

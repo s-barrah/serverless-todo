@@ -1,14 +1,9 @@
 export default {
-    hello: {
-        handler: 'handler.hello',
-        events: [
-            {
-                http: {
-                    method: 'get',
-                    path: 'hello',
-                }
-            }
-        ]
+    jwtAuth: {
+        handler: 'handler.jwtAuth',
+    },
+    basicAuth: {
+        handler: 'handler.basicAuth',
     },
     createList: {
         handler: 'handler.createList',
@@ -17,6 +12,9 @@ export default {
                 http: {
                     method: 'POST',
                     path: 'list/create',
+                    authorizer: {
+                        name: 'jwtAuth'
+                    },
                     cors: true
                 }
             }
@@ -29,6 +27,9 @@ export default {
                 http: {
                     method: 'POST',
                     path: 'list/delete',
+                    authorizer: {
+                        name: 'jwtAuth'
+                    },
                     cors: true
                 }
             }
@@ -41,6 +42,9 @@ export default {
                 http: {
                     method: 'post',
                     path: 'list',
+                    authorizer: {
+                        name: 'jwtAuth'
+                    },
                     cors: true
                 }
             }
@@ -53,6 +57,9 @@ export default {
                 http: {
                     method: 'POST',
                     path: 'list/update',
+                    authorizer: {
+                        name: 'jwtAuth'
+                    },
                     cors: true
                 }
             }
@@ -65,6 +72,9 @@ export default {
                 http: {
                     method: 'POST',
                     path: 'task/create',
+                    authorizer: {
+                        name: 'jwtAuth'
+                    },
                     cors: true
                 }
             }
@@ -77,6 +87,24 @@ export default {
                 http: {
                     method: 'POST',
                     path: 'task/delete',
+                    authorizer: {
+                        name: 'jwtAuth'
+                    },
+                    cors: true
+                }
+            }
+        ]
+    },
+    getTask: {
+        handler: 'handler.getTask',
+        events: [
+            {
+                http: {
+                    method: 'POST',
+                    path: 'task',
+                    authorizer: {
+                        name: 'jwtAuth'
+                    },
                     cors: true
                 }
             }
@@ -89,6 +117,9 @@ export default {
                 http: {
                     method: 'POST',
                     path: 'task/update',
+                    authorizer: {
+                        name: 'jwtAuth'
+                    },
                     cors: true
                 }
             }

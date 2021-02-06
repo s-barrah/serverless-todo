@@ -12,9 +12,9 @@
     "type": "string"
   },
   "description": {
-    "presence": {
-      "allowEmpty": false
-    },
     "type": "string"
+  },
+  "completed": {
+    "type": "boolean"
   }
 }

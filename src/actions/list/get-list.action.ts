@@ -100,26 +100,41 @@ import { ResponseMessage } from "../../enums/response-message.enum";
  *    }
  */
 export const getList: APIGatewayProxyHandler = async (event: APIGatewayEvent, _context: Context): Promise<APIGatewayProxyResult> => {
+    // Initialize response variable
     let response;
+
+    // Parse request parameters
     const requestData = JSON.parse(event.body);
 
+    // Initialise database service
     const databaseService = new DatabaseService();
 
+    // Destructure request data
+    const { listId } = requestData
+
+    // Destructure process.env
+    const { LIST_TABLE, TASKS_TABLE } = process.env;
+
+    // Validate against constraints
     return validateAgainstConstraints(requestData, requestConstraints)
-        .then(async () => {
-            return await databaseService.getItem({ key: requestData.listId, tableName: process.env.LIST_TABLE });
+        .then(() => {
+            // Get item from the DynamoDB table
+            return databaseService.getItem({ key: listId, tableName: LIST_TABLE });
         })
         .then( async (data) => {
+            // Initialise DynamoDB QUERY parameters
             const params = {
-                TableName: process.env.TASKS_TABLE,
+                TableName: TASKS_TABLE,
                 IndexName : 'list_index',
                 KeyConditionExpression : 'listId = :listIdVal',
                 ExpressionAttributeValues : {
-                    ':listIdVal' : requestData.listId
+                    ':listIdVal' : listId
                 }
             };
+
+            // Query table for tasks with the listId
             const results = await databaseService.query(params);
-            const tasksData = results?.Items?.map((task) => {
+            const tasks = results?.Items?.map((task) => {
                 return {
                     id: task.id,
                     description: task.description,
@@ -128,34 +143,21 @@ export const getList: APIGatewayProxyHandler = async (event: APIGatewayEvent, _c
                     updatedAt: task.updatedAt,
                 }
             });
+
+            // Set Success Response with data
             response = new ResponseModel({
                 ...data.Item,
-                tasks: tasksData,
+                taskCount: tasks?.length,
+                tasks: tasks,
             }, StatusCode.OK, ResponseMessage.GET_LIST_SUCCESS);
 
         })
-        /*.then((results) => {
-            const data = results?.Items?.map((task) => {
-                return {
-                    id: task.id,
-                    description: task.description,
-                    completed: task.completed,
-                }
-            });
-            if (!data.length) {
-                response = new ResponseModel({}, StatusCode.BAD_REQUEST, ResponseMessage.GET_LIST_FAIL);
-            } else {
-                response = new ResponseModel({
-                    ...results[0],
-                    tasks: data
-                }, StatusCode.OK, ResponseMessage.GET_LIST_SUCCESS);
-            }
-
-        })*/
         .catch((error) => {
+            // Set Error Response
             response = (error instanceof ResponseModel) ? error : new ResponseModel({}, StatusCode.ERROR, ResponseMessage.GET_LIST_FAIL);
         })
         .then(() => {
+            // Return API Response
             return response.generate()
         });
 }

@@ -36,12 +36,19 @@ type DeleteItemOutput = AWS.DynamoDB.DocumentClient.DeleteItemOutput;
 
 type Item = {[index: string]: string};
 
+const {
+    STAGE,
+    DYNAMODB_LOCAL_STAGE,
+    DYNAMODB_LOCAL_ACCESS_KEY_ID,
+    DYNAMODB_LOCAL_SECRET_ACCESS_KEY,
+    DYNAMODB_LOCAL_ENDPOINT
+} = process.env;
 
 const config: IConfig = { region: "eu-west-1" };
-if (process.env.STAGE === process.env.DYNAMODB_LOCAL_STAGE) {
-    config.accessKeyId = process.env.DYNAMODB_LOCAL_ACCESS_KEY_ID; // local dynamodb accessKeyId
-    config.secretAccessKey = process.env.DYNAMODB_LOCAL_SECRET_ACCESS_KEY; // local dynamodb secretAccessKey
-    config.endpoint = process.env.DYNAMODB_LOCAL_ENDPOINT; // local dynamodb endpoint
+if (STAGE === DYNAMODB_LOCAL_STAGE) {
+    config.accessKeyId = DYNAMODB_LOCAL_ACCESS_KEY_ID; // local dynamodb accessKeyId
+    config.secretAccessKey = DYNAMODB_LOCAL_SECRET_ACCESS_KEY; // local dynamodb secretAccessKey
+    config.endpoint = DYNAMODB_LOCAL_ENDPOINT; // local dynamodb endpoint
 }
 AWS.config.update(config);
 
@@ -64,7 +71,7 @@ export default class DatabaseService {
             return results;
         }
         console.error('Item does not exist');
-        return Promise.reject(new ResponseModel({ id: key }, StatusCode.BAD_REQUEST, ResponseMessage.INVALID_REQUEST))
+        throw new ResponseModel({ id: key }, StatusCode.BAD_REQUEST, ResponseMessage.INVALID_REQUEST)
     }
 
     create = async(params: PutItem): Promise<PutItemOutput> => {
@@ -105,10 +112,14 @@ export default class DatabaseService {
     }
 
     get = async (params: GetItem): Promise<GetItemOutput> => {
+        console.log('DB GET - STAGE: ', STAGE);
+        console.log('DB GET - params.TableName: ', params.TableName);
+        console.log('DB GET - params.Key: ', params.Key);
+
         try {
-            // result.Item
             return await documentClient.get(params).promise();
         } catch (error) {
+            console.error(`get-error - TableName: ${params.TableName}`);
             console.error(`get-error: ${error}`);
             throw new ResponseModel({}, 500, `get-error: ${error}`);
         }
