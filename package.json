@@ -35,7 +35,7 @@
     "husky": "^4.3.6",
     "lint-staged": "^10.5.3",
     "mocha": "^8.2.1",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^3.1.1",
     "prettier": "^2.2.1",
     "serverless-bundle": "^3.2.1",
     "serverless-dotenv-plugin": "^3.1.0",
